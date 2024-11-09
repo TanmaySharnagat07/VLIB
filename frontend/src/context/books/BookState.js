@@ -1,11 +1,11 @@
 import React, { useState } from "react";
+import { toast } from "react-toastify";
 import BookContext from "./BookContext";
-import { useFlashMessage } from "../FlashMessageContext";
+import "react-toastify/dist/ReactToastify.css";
 
 const BookState = (props) => {
   const initialBooks = [];
   const [books, setBooks] = useState(initialBooks);
-  const { setMessage } = useFlashMessage();
 
   const fetchBooks = async () => {
     try {
@@ -20,7 +20,7 @@ const BookState = (props) => {
       setBooks(json.books);
     } catch (error) {
       console.error("Error fetching books:", error);
-      setMessage("Error fetching books.", "error");
+      toast.error("Error fetching books.");
     }
   };
 
@@ -34,41 +34,40 @@ const BookState = (props) => {
       copiesAvailable,
       description,
     } = bookDetails;
-    const token = localStorage.getItem("token");
-    console.log(token);
-    console.log(bookDetails);
-    console.log(bookCover);
-    // Create a new FormData object
+
     const formData = new FormData();
     formData.append("title", title);
     formData.append("author", author);
     formData.append("isbn", isbn);
     formData.append("publishedDate", publishedDate);
-    formData.append("genre", JSON.stringify(genre)); // Convert genre array to string
+    formData.append("genre", JSON.stringify(genre));
     formData.append("copiesAvailable", copiesAvailable);
     formData.append("description", description);
 
-    // Append the book cover image to the form data, or use default URL if no image is provided
     if (bookCover) {
       formData.append("coverImage", bookCover);
     }
 
-    const response = await fetch("http://localhost:4000/api/books/addBook", {
-      method: "POST",
-      credentials: "include",
-      body: formData,
-    });
+    try {
+      const response = await fetch("http://localhost:4000/api/books/addBook", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
 
-    const json = await response.json();
-    console.log(json);
-
-    if (json.success) {
-      setBooks([...books, json.book]);
-      setMessage(json.message, "success");
-    } else {
-      setMessage(json.message, "error");
+      const json = await response.json();
+      if (json.success) {
+        setBooks([...books, json.book]);
+        toast.success(json.message || "Book added successfully!");
+      } else {
+        toast.error(json.message || "Failed to add book.");
+      }
+    } catch (error) {
+      console.error("Error adding book:", error);
+      toast.error("Error adding book.");
     }
   };
+
 
   const borrowBook = async (borrowedBooks) => {
     const response = await fetch("http://localhost:4000/api/books/borrowBook", {
@@ -84,10 +83,10 @@ const BookState = (props) => {
     console.log(json);
 
     if (json.success) {
-      setMessage(json.message, "success");
-    } else {
-      setMessage(json.message, "error");
-    }
+      // setMessage(json.message, "success");
+    } //else {
+    //   setMessage(json.message, "error");
+    // }
   };
 
   const deleteBook = async (isbn) => {
@@ -109,13 +108,13 @@ const BookState = (props) => {
 
       if (json.success) {
         setBooks(books.filter((book) => book.isbn !== isbn));
-        setMessage(json.message, "success");
-      } else {
-        setMessage(json.message, "error");
-      }
+        // setMessage(json.message, "success");
+      }// else {
+      //   setMessage(json.message, "error");
+      // }
     } catch (err) {
       console.error("Error deleting book:", err);
-      setMessage("Error deleting book.", "error");
+      // setMessage("Error deleting book.", "error");
     }
   };
 

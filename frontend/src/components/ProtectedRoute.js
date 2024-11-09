@@ -1,15 +1,15 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useFlashMessage } from "../context/FlashMessageContext";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const ProtectedRoute = ({ roleBasedRoutes }) => {
-  const { setMessage } = useFlashMessage();
   const role = localStorage.getItem("role");
   const isLoggedIn = !!localStorage.getItem("token");
   const location = useLocation();
 
   if (!isLoggedIn) {
-    setMessage("Please log in to access this page.");
+    toast.error("Please log in to access this page.", { position: "top-center" });
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -21,7 +21,8 @@ const ProtectedRoute = ({ roleBasedRoutes }) => {
     return roleBasedRoutes.student;
   }
 
-  // If role does not match, redirect to login or another appropriate route
+  // If role does not match, show an error and redirect
+  toast.error("You do not have permission to access this page.", { position: "top-center" });
   return <Navigate to="/login" state={{ from: location }} replace />;
 };
 

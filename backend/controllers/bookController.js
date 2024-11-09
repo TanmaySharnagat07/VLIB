@@ -134,7 +134,7 @@ export const deleteBookById = catchAsyncErrors(async (req, res, next) => {
 export const borrowBook = catchAsyncErrors(async (req, res, next) => {
   const { books } = req.body; // Expecting an array of { isbn, quantity } objects
   const userId = req.user._id;
-
+  
   if (!books || books.length === 0) {
     return next(new ErrorHandler("No books specified for borrowing", 400));
   }

@@ -1,17 +1,18 @@
 import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import BookContext from "../../context/books/BookContext";
+import { motion } from "framer-motion";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const BorrowBook = () => {
   const { borrowBook } = useContext(BookContext);
   const navigate = useNavigate();
   const [borrowedBooks, setBorrowedBooks] = useState(() => {
-    // Retrieve borrowed books from localStorage when component mounts
     const storedBooks = localStorage.getItem("borrowedBooks");
     return storedBooks ? JSON.parse(storedBooks) : [];
   });
 
-  // Function to increase the quantity of a borrowed book
   const increaseQuantity = (isbn) => {
     const updatedBorrowedBooks = borrowedBooks.map((book) =>
       book.isbn === isbn ? { ...book, quantity: book.quantity + 1 } : book
@@ -20,7 +21,6 @@ const BorrowBook = () => {
     localStorage.setItem("borrowedBooks", JSON.stringify(updatedBorrowedBooks));
   };
 
-  // Function to decrease the quantity of a borrowed book
   const decreaseQuantity = (isbn) => {
     const updatedBorrowedBooks = borrowedBooks
       .map((book) =>
@@ -34,7 +34,6 @@ const BorrowBook = () => {
     localStorage.setItem("borrowedBooks", JSON.stringify(updatedBorrowedBooks));
   };
 
-  // Function to remove a book from the borrowed list
   const removeBook = (isbn) => {
     const updatedBorrowedBooks = borrowedBooks.filter(
       (book) => book.isbn !== isbn
@@ -43,33 +42,60 @@ const BorrowBook = () => {
     localStorage.setItem("borrowedBooks", JSON.stringify(updatedBorrowedBooks));
   };
 
-  // Function to calculate the total number of items
   const calculateTotalItems = () => {
     return borrowedBooks.reduce((total, book) => total + book.quantity, 0);
   };
 
-  // Function to handle borrowing books
   const handleBorrowBooks = async () => {
     try {
-      // Ensure the borrowBook function expects the books with the quantity included
-      await borrowBook(borrowedBooks); // Borrow the books using the context
-      setBorrowedBooks([]); // Clear local state
+      await borrowBook(borrowedBooks);
+      setBorrowedBooks([]);
       localStorage.removeItem("borrowedBooks");
+      toast.success("Books successfully borrowed!");
     } catch (error) {
       console.error("Failed to borrow books:", error);
+      toast.error("Failed to borrow books. Please try again.");
     }
   };
 
   return (
-    <div className="container my-5">
+    <div className="container my-5" style={{ maxWidth: "1250px", height: "100vh" }}>
+      <ToastContainer position="top-center" autoClose={3000} />
       <div className="row">
-        {/* Borrowed Books Section */}
-        <div className="col-md-8">
-          <h4 className="mb-4">Borrowed Books</h4>
+        <div style={{
+          overflowY: "auto",
+          maxHeight: "calc(100vh - 50px)",
+          maxWidth: "100%",
+          scrollbarWidth: "none",
+        }}>
+          <style>
+            {`
+              .scrollable-content::-webkit-scrollbar {
+                display: none;
+              }
+            `}
+          </style>
+
+          
           {borrowedBooks.length === 0 ? (
-            <p>No books selected for borrowing.</p>
+            <div className="text-center">
+              <img
+                src="https://chhotubookstall.com/assets/img/empty-cart.png"
+                alt="Empty Cart"
+                style={{ width: "400px", height: "400px" }}
+              />
+           
+            </div>
           ) : (
-            <div className="table-responsive">
+             <>
+             <h4 className="mb-4 text-center">Borrowed Books</h4>
+             <motion.div
+              className="table-responsive"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              style={{ width: "100%" }}
+            >
               <table className="table table-borderless">
                 <thead>
                   <tr>
@@ -82,8 +108,22 @@ const BorrowBook = () => {
                   {borrowedBooks.map((book) => (
                     <tr key={book.isbn}>
                       <td>
-                        <strong>{book.title || "Book Title"}</strong>
-                        <p className="text-muted">ISBN: {book.isbn}</p>
+                        <div className="d-flex align-items-center">
+                          <img
+                            src={book.coverImage}
+                            alt={book.title}
+                            style={{
+                              width: "150px",
+                              height: "200px",
+                              objectFit: "cover",
+                              marginRight: "15px",
+                            }}
+                          />
+                          <div>
+                            <strong>{book.title || "Book Title"}</strong>
+                            <p className="text-muted">ISBN: {book.isbn}</p>
+                          </div>
+                        </div>
                       </td>
                       <td>
                         <div className="d-flex align-items-center">
@@ -120,29 +160,52 @@ const BorrowBook = () => {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </motion.div>
+             </>
+            
+            
           )}
-          <button
+          <motion.button
             className="btn btn-primary mt-3"
+           
             onClick={() => navigate("/dashboard/Student")}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             Continue Shopping
-          </button>
+          </motion.button>
         </div>
 
-        {/* Borrow Summary Section */}
-        <div className="col-md-4">
-          <div className="card p-4">
+        <div
+          className="col-md-4"
+          style={{
+            position: "fixed",
+            top: "100px",
+            right: "20px",
+            height: "auto",
+            width: "300px",
+            zIndex: 1000,
+          }}
+        >
+          <motion.div
+            className="card p-4"
+            initial={{ x: "100vw" }}
+            animate={{ x: 0 }}
+            transition={{ type: "spring", stiffness: 100 }}
+            style={{ width: "100%" }}
+          >
             <h5 className="card-title">Borrow Summary</h5>
             <p className="mb-2">Items: {calculateTotalItems()}</p>
             <hr />
-            <button
+            <motion.button
               className="btn btn-primary btn-block"
               onClick={handleBorrowBooks}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
             >
               Borrow
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
         </div>
       </div>
     </div>

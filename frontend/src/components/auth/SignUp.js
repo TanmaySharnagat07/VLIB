@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useFlashMessage } from "../../context/FlashMessageContext";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const SignUp = () => {
   const [credentials, setCredentials] = useState({
@@ -15,7 +16,6 @@ const SignUp = () => {
     role: "",
   });
   const navigate = useNavigate();
-  const { setMessage } = useFlashMessage();
 
   const onChange = (e) => {
     const { name, value } = e.target;
@@ -31,23 +31,23 @@ const SignUp = () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(credentials),
-    })
+    });
 
     const json = await response.json();
 
-    if(json.success){
+    if (json.success) {
       localStorage.setItem("token", json.token);
       localStorage.setItem("role", json.user.role);
-      setMessage(json.message, "success");
+      toast.success("Signup successful!", { position: "top-center" });
       navigate("/dashboard");
-    }
-    else{
-      setMessage(json.message, "error");
+    } else {
+      toast.error(json.message || "Invalid request, please check your details", { position: "top-center" });
     }
   };
 
   return (
     <div className="container d-flex justify-content-center align-items-center vh-100">
+      <ToastContainer autoClose={3000} />
       <div className="card p-4" style={{ width: "100%", maxWidth: "600px" }}>
         <h2 className="text-center mb-4">Sign Up</h2>
         <form onSubmit={handleSubmit}>

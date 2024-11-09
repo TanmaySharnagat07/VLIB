@@ -87,7 +87,7 @@ const DashboardAdmin = () => {
   );
 
   return (
-    <div className="container-fluid mt-3">
+    <div className="container-fluid mt-3" style={{height:"80vh"}}>
       <style jsx="true">{`
         .sticky-header {
           position: sticky;

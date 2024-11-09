@@ -103,22 +103,6 @@ const Navbar = () => {
                   Home
                 </Link>
               </li>
-              <li className="nav-item">
-                <Link
-                  className={`nav-link ${
-                    location.pathname === "/about" ? "active" : ""
-                  }`}
-                  to="/about"
-                  style={{
-                    color:
-                      location.pathname === "/about" ? "#FFD600" : "#ffffff",
-                    margin: "0 0.8rem",
-                    fontSize: "1rem",
-                  }}
-                >
-                  About
-                </Link>
-              </li>
               {isLoggedIn && userRole && (
                 <li className="nav-item">
                   <Link
@@ -179,6 +163,41 @@ const Navbar = () => {
                 </li>
               )}
             </ul>
+
+            {isLoggedIn && userRole === 'Student' && <div className="d-flex align-items-center">
+              {/* Your Cart button */}
+              <button
+                onClick={() => navigate("/borrowBooks")}
+                style={{
+                  width: "45px",
+                  height: "45px",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+                  borderRadius: "50%",
+                  backgroundColor: "black",
+                  color: "#fff",
+                  marginRight: "10px",
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="w-6 h-6 text-blue-600"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M3 3h2l.4 2m0 0h13.4l1.3 6H6.4l-1.3-6zM6 10v10a1 1 0 001 1h10a1 1 0 001-1V10m-5 5h.01M10 15h.01"
+                  />
+                </svg>
+              </button>
+              </div>}
 
             {isLoggedIn ? (
               <>
