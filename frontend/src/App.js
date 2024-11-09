@@ -14,7 +14,9 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import BookState from "./context/books/BookState";
 import BorrowBook from "./components/book/BorrowBook";
 import AddBook from "./components/book/AddBook";
-
+import BorrowedUsers from "./components/dashboard/BorrowedUsers";
+import DeleteBook from "./components/book/DeleteBook";
+import Profile from "./components/infopages/Profile";
 
 function App() {
   return (
@@ -39,6 +41,16 @@ function App() {
                 />
               }
             />
+            <Route
+              path="/BorrowedUsers/:bookId"
+              element={
+                <ProtectedRoute
+                  roleBasedRoutes={{
+                    admin: <BorrowedUsers />
+                  }}
+                />
+              }
+            />
 
             <Route
               path="/borrowBooks"
@@ -55,11 +67,26 @@ function App() {
               element={
                 <ProtectedRoute
                   roleBasedRoutes={{
-                    admin: <AddBook/>
+                    admin: <AddBook />,
                   }}
                 />
               }
             />
+
+            <Route path="/deleteBook" element={
+              <ProtectedRoute
+                roleBasedRoutes={{
+                  admin: <DeleteBook />,
+                }}
+              />
+            }/>
+
+            <Route path="/profile" element={<ProtectedRoute
+              roleBasedRoutes={{
+                admin: <Profile />,
+                student: <Profile />,
+              }}
+            />}/>
           </Routes>
         </Router>
       </BookState>

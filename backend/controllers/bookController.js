@@ -143,7 +143,7 @@ export const borrowBook = catchAsyncErrors(async (req, res, next) => {
   let borrowedBooks = [];
 
   for (let book of books) {
-    const { isbn, quantity } = book;
+    const { title, isbn, quantity } = book;
 
     if (!isbn || !quantity || quantity <= 0) {
       return next(
@@ -161,27 +161,56 @@ export const borrowBook = catchAsyncErrors(async (req, res, next) => {
     if (!bookDoc) {
       return next(
         new ErrorHandler(
-          `Book with ISBN ${isbn} not found or not enough copies available`,
+          `Book ${title} not found or not enough copies available`,
           404
         )
       );
     }
 
-    // Update the borrowedBy array for the book
-    await Book.findOneAndUpdate(
-      { _id: bookDoc._id },
-      { $push: { borrowedBy: { userId: userId, borrowedDate: new Date() } } },
-      { new: true }
+    // Check if the user is already in the borrowedBy array
+    const userAlreadyBorrowed = bookDoc.borrowedBy.some(
+      (borrow) => borrow.userId.toString() === userId.toString()
     );
 
-    // Update the user's borrowed books
-    await User.findByIdAndUpdate(
-      userId,
-      { $push: { booksBorrowed: { booksId: bookDoc._id, date: new Date() } } },
-      { new: true }
+    if (!userAlreadyBorrowed) {
+      // Add the user to the borrowedBy array if not already present
+      bookDoc.borrowedBy.push({
+        userId: userId,
+        borrowedDate: new Date(),
+      });
+
+      // Save the updated book document
+      await bookDoc.save();
+    }
+
+    // Update or add the book in the user's booksBorrowed array
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return next(new ErrorHandler("User not found", 404));
+    }
+
+    const existingBorrowedBook = user.booksBorrowed.find(
+      (borrowed) => borrowed.booksId.toString() === bookDoc._id.toString()
     );
 
-    // Add to borrowedBooks array
+    if (existingBorrowedBook) {
+      // Update the quantity if the user has already borrowed this book
+      existingBorrowedBook.quantity += quantity;
+      existingBorrowedBook.date = new Date();
+    } else {
+      // Add a new entry if the user has not borrowed this book before
+      user.booksBorrowed.push({
+        booksId: bookDoc._id,
+        quantity: quantity,
+        date: new Date(),
+      });
+    }
+
+    // Save the updated user document
+    await user.save();
+
+    // Add to borrowedBooks array for the response
     borrowedBooks.push({
       booksId: bookDoc._id,
       title: bookDoc.title,
@@ -191,22 +220,54 @@ export const borrowBook = catchAsyncErrors(async (req, res, next) => {
     });
 
     console.log("book borrowed");
-
-    console.log("sending email notification")
-
-    const returnDate = new Date(new Date().getTime() + 5000); // 5 seconds from now
-    setTimeout(async () => {
-      // Fetch user email
-      const user = await User.findById(userId);
-      if (user && user.email) {
-        await sendReturnReminder(user.email, bookDoc.title, returnDate);
-      }
-    }, 5000); // 5 seconds delay
   }
-
+  console.log(borrowedBooks);
   return res.status(200).json({
     success: true,
     message: "Books borrowed successfully",
     borrowedBooks,
+  });
+});
+
+export const getBookByID = catchAsyncErrors(async (req, res, next) => {
+  const book = await Book.findById(req.params.bookID).populate(
+    "borrowedBy.userId",
+    "firstName lastName email enrollmentNumber dob gender"
+  );
+
+  if (!book) {
+    return next(new ErrorHandler("Book not found", 404));
+  }
+  return res.status(200).json({
+    success: true,
+    book,
+  });
+});
+
+export const returnBook = catchAsyncErrors(async (req, res, next) => {
+  const { bookId } = req.params;
+  const { borrowId } = req.body;
+
+  const book = await Book.findByIdAndUpdate(bookId);
+  if (!book) {
+    return next(new ErrorHandler("Book not found", 404));
+  }
+
+  const bookRecord = book.borrowedBy.find(
+    (borrow) => borrow._id.toString() === borrowId
+  );
+  if (!bookRecord) {
+    return next(new ErrorHandler("Borrow record not found", 404));
+  }
+
+  book.borrowedBy = book.borrowedBy.filter(
+    (borrow) => borrow._id.toString() !== borrowId
+  );
+  book.copiesAvailable += 1;
+  await book.save();
+
+  return res.status(200).json({
+    success: true,
+    message: "Book returned successfully",
   });
 });

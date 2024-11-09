@@ -69,29 +69,58 @@ const BookState = (props) => {
       setMessage(json.message, "error");
     }
   };
-  
+
   const borrowBook = async (borrowedBooks) => {
     const response = await fetch("http://localhost:4000/api/books/borrowBook", {
-      method: "PUT",
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({ books: borrowedBooks }),  // Wrap borrowedBooks in an object with the key "books"
+      body: JSON.stringify({ books: borrowedBooks }), // Wrap borrowedBooks in an object with the key "books"
     });
-  
+
     const json = await response.json();
     console.log(json);
-  
+
     if (json.success) {
       setMessage(json.message, "success");
     } else {
       setMessage(json.message, "error");
     }
   };
-  
+
+  const deleteBook = async (isbn) => {
+    try {
+      const response = await fetch(
+        "http://localhost:4000/api/books/deleteBook",
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ isbn }),
+        }
+      );
+
+      const json = await response.json();
+      console.log(json);
+
+      if (json.success) {
+        setBooks(books.filter((book) => book.isbn !== isbn));
+        setMessage(json.message, "success");
+      } else {
+        setMessage(json.message, "error");
+      }
+    } catch (err) {
+      console.error("Error deleting book:", err);
+      setMessage("Error deleting book.", "error");
+    }
+  };
+
   return (
-    <BookContext.Provider value={{ books, addBook, fetchBooks, borrowBook }}>
+    <BookContext.Provider value={{ books, addBook, fetchBooks, borrowBook, deleteBook }}>
       {props.children}
     </BookContext.Provider>
   );

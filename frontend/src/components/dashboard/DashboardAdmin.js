@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import BookContext from "../../context/books/BookContext";
-import { Modal, Button } from "react-bootstrap";
+import { Button, Form } from "react-bootstrap";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -9,8 +10,10 @@ const DashboardAdmin = () => {
   const { books, fetchBooks } = useContext(BookContext);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+  const [booksWithUserDetails, setBooksWithUserDetails] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const userCache = {};
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadBooks = async () => {
@@ -31,26 +34,120 @@ const DashboardAdmin = () => {
       }
     };
     loadBooks();
-  }, [fetchBooks]);
+  }, []);
 
-  // Filter books that have been borrowed
-  const borrowedBooks = books.filter((book) => book.borrowedBy.length > 0);
+  useEffect(() => {
+    const fetchUserNames = async () => {
+      const updatedBooks = await Promise.all(
+        books.map(async (book) => {
+          if (book.borrowedBy.length === 0) return null; // Filter out books that are not borrowed
+          const updatedBorrowedBy = await Promise.all(
+            book.borrowedBy.map(async (borrow) => {
+              if (userCache[borrow.userId]) {
+                return { ...borrow, userName: userCache[borrow.userId] };
+              }
+              try {
+                const response = await fetch(
+                  `http://localhost:4000/api/user/${borrow.userId}`
+                );
+                if (!response.ok) {
+                  throw new Error("Failed to fetch user details");
+                }
+                const userData = await response.json();
+                const fullName = `${userData.data.firstName} ${userData.data.lastName}`;
+                userCache[borrow.userId] = fullName;
+                return { ...borrow, userName: fullName };
+              } catch (error) {
+                return { ...borrow, userName: "Unknown User" };
+              }
+            })
+          );
+          return { ...book, borrowedBy: updatedBorrowedBy };
+        })
+      );
+      // Filter out any null values (non-borrowed books)
+      setBooksWithUserDetails(updatedBooks.filter((book) => book !== null));
+    };
 
-  const handleViewDetails = (user) => {
-    setSelectedUser(user);
-    setShowModal(true);
+    if (books.length > 0) {
+      fetchUserNames();
+    }
+  }, [books]);
+
+  const handleViewBorrowedUsers = (bookId) => {
+    navigate(`/BorrowedUsers/${bookId}`);
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setSelectedUser(null);
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value.toLowerCase());
   };
+
+  const filteredBooks = booksWithUserDetails.filter((book) =>
+    book.title.toLowerCase().includes(searchQuery)
+  );
 
   return (
-    <div className="container mt-5">
-      <h2 className="mb-4">Borrowed Books Dashboard</h2>
+    <div className="container-fluid mt-3">
+      <style jsx="true">{`
+        .sticky-header {
+          position: sticky;
+          top: 0;
+          z-index: 5;
+          background-color: white;
+          padding: 10px 5rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .content-container {
+          height: 75vh;
+          overflow-x: hidden;
+          margin-top: 1rem;
+        }
+        .row {
+          height: 100%;
+          padding: 0 5rem;
+        }
+        .card {
+          border-radius: 15px;
+          overflow: hidden;
+          transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+          transform: scale(1.02);
+          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-img:hover {
+          transform: scale(1.1);
+        }
+
+        .animated-button {
+          background-color: #007bff;
+          border: none;
+          transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .animated-button:hover {
+          background-color: #0056b3;
+          transform: translateY(-3px);
+        }
+      `}</style>
+      <div className="sticky-header">
+        <h2 className="mb-0">Borrowed Books</h2>
+        <Form.Control
+          type="text"
+          placeholder="Search books by title..."
+          className="w-50"
+          onChange={handleSearch}
+        />
+      </div>
       {loading ? (
-        <div className="d-flex justify-content-center align-items-center" style={{ height: "60vh" }}>
+        <div
+          className="d-flex justify-content-center align-items-center"
+          style={{ height: "60vh" }}
+        >
           <div className="spinner-border" role="status">
             <span className="visually-hidden">Loading...</span>
           </div>
@@ -59,84 +156,51 @@ const DashboardAdmin = () => {
         <div className="alert alert-danger" role="alert">
           {error}
         </div>
-      ) : borrowedBooks.length === 0 ? (
+      ) : filteredBooks.length === 0 ? (
         <div className="alert alert-info" role="alert">
           No books have been borrowed yet.
         </div>
       ) : (
-        <div className="row">
-          {borrowedBooks.map((book, index) => (
-            <div className="col-md-6 mb-4" key={book._id}>
-              <div className="card h-100 shadow-lg">
-                <div className="row g-0">
-                  <div className="col-md-4">
-                    <img
-                      src={book.coverImage}
-                      className="img-fluid rounded-start"
-                      alt={`${book.title} cover`}
-                      style={{ maxHeight: "150px" }}
-                    />
-                  </div>
-                  <div className="col-md-8">
-                    <div className="card-body">
-                      <h5 className="card-title text-primary">{book.title}</h5>
-                      <h6 className="card-subtitle mb-2 text-muted">Author: {book.author}</h6>
-                      <p className="card-text"><strong>ISBN:</strong> {book.isbn}</p>
-                      <p className="card-text"><strong>Genre:</strong> {book.genre.join(", ")}</p>
-                      <p className="card-text"><strong>Copies Available:</strong> {book.copiesAvailable}</p>
-                      <div className="mt-3">
-                        <h6>Borrowed By:</h6>
-                        {book.borrowedBy.map((borrow, i) => (
-                          <div key={i} className="border p-2 mb-2 rounded">
-                            <p className="mb-1">
-                              <strong>Name:</strong> {borrow.userId ? `${borrow.userId}` : "N/A"}
-                            </p>
-                            <p className="mb-1">
-                              <strong>Borrowed Date:</strong> {new Date(borrow.borrowedDate).toLocaleDateString()}
-                            </p>
-                            <Button
-                              variant="info"
-                              className="btn-sm"
-                              onClick={() => handleViewDetails(borrow.userId)}
-                            >
-                              View Details
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+        <div className="content-container">
+          <div className="row">
+            {filteredBooks.map((book) => (
+              <div className="col-md-6 mb-4 d-flex" key={book._id}>
+                <div className="card h-100 w-100 d-flex flex-row align-items-center border-0 hover-effect">
+                  <img
+                    src={book.coverImage}
+                    className="img-fluid rounded-end card-img"
+                    alt={`${book.title}`}
+                    style={{
+                      maxWidth: "150px",
+                      objectFit: "cover",
+                      transition: "transform 0.3s ease-in-out",
+                    }}
+                  />
+                  <div className="card-body">
+                    <h5 className="card-title text-primary">{book.title}</h5>
+                    <h6 className="card-subtitle mb-2 text-muted">
+                      Author: {book.author}
+                    </h6>
+                    <p className="card-text">
+                      <strong>ISBN:</strong> {book.isbn}
+                    </p>
+                    <p className="card-text">
+                      <strong>Copies Available:</strong> {book.copiesAvailable}
+                    </p>
+                    <Button
+                      variant="primary"
+                      className="animated-button"
+                      onClick={() => handleViewBorrowedUsers(book._id)}
+                    >
+                      View Borrowed Users
+                    </Button>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
-      {/* Modal for showing user details */}
-      <Modal show={showModal} onHide={handleCloseModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>User Details</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {selectedUser ? (
-            <div>
-              <p><strong>First Name:</strong> {selectedUser.firstName}</p>
-              <p><strong>Last Name:</strong> {selectedUser.lastName}</p>
-              <p><strong>Email:</strong> {selectedUser.email}</p>
-              <p><strong>Enrollment Number:</strong> {selectedUser.enrollmentNumber}</p>
-              <p><strong>Gender:</strong> {selectedUser.gender}</p>
-              <p><strong>Date of Birth:</strong> {new Date(selectedUser.dob).toLocaleDateString()}</p>
-            </div>
-          ) : (
-            <p>No user details available.</p>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseModal}>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
       {/* ToastContainer to show notifications */}
       <ToastContainer />
     </div>

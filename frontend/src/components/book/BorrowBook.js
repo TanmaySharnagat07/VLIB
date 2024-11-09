@@ -51,10 +51,10 @@ const BorrowBook = () => {
   // Function to handle borrowing books
   const handleBorrowBooks = async () => {
     try {
+      // Ensure the borrowBook function expects the books with the quantity included
       await borrowBook(borrowedBooks); // Borrow the books using the context
       setBorrowedBooks([]); // Clear local state
-      localStorage.removeItem("borrowedBooks"); // Clear localStorage
-      alert("Books successfully borrowed!");
+      localStorage.removeItem("borrowedBooks");
     } catch (error) {
       console.error("Failed to borrow books:", error);
     }

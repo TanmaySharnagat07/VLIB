@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import profileImg from "./profileImg.avif"; 
+import profileImg from "./profileImg.avif";
 
 const Navbar = () => {
   const location = useLocation();
@@ -11,6 +11,8 @@ const Navbar = () => {
 
   const [showDropdown, setShowDropdown] = useState(false);
   const [isNavbarCollapsed, setIsNavbarCollapsed] = useState(true);
+
+  const dropdownRef = useRef(null);
 
   // Handle logout
   const handleLogout = () => {
@@ -27,6 +29,20 @@ const Navbar = () => {
     setIsNavbarCollapsed((prev) => !prev);
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
     <>
       <nav
@@ -35,6 +51,9 @@ const Navbar = () => {
           background: "linear-gradient(135deg, #00c6ff, #0072ff)",
           padding: "1rem 2rem",
           boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
+          position: "sticky",
+          top: 0,
+          zIndex: 1000,
         }}
       >
         <div className="container-fluid">
@@ -139,11 +158,35 @@ const Navbar = () => {
                   </Link>
                 </li>
               )}
+              {isLoggedIn && userRole === "Admin" && (
+                <li className="nav-item">
+                  <Link
+                    className={`nav-link ${
+                      location.pathname === "/deleteBook" ? "active" : ""
+                    }`}
+                    to="/deleteBook"
+                    style={{
+                      color:
+                        location.pathname === "/deleteBook"
+                          ? "#ffd700"
+                          : "#ffffff",
+                      margin: "0 0.8rem",
+                      fontSize: "1rem",
+                    }}
+                  >
+                    Delete Book
+                  </Link>
+                </li>
+              )}
             </ul>
 
             {isLoggedIn ? (
               <>
-                <div className="dropdown" style={{ position: "relative" }}>
+                <div
+                  className="dropdown"
+                  ref={dropdownRef}
+                  style={{ position: "relative", zIndex: "1000" }}
+                >
                   <img
                     src={profileImg}
                     alt="Profile"
@@ -167,8 +210,7 @@ const Navbar = () => {
                         position: "absolute",
                         right: "0",
                         transform: "translateX(-10px)",
-                        minWidth: "150px",
-                        zIndex: "1000",
+                        minWidth: "150px"
                       }}
                     >
                       <li>

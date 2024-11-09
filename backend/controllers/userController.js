@@ -44,16 +44,16 @@ export const userRegister = catchAsyncErrors(async (req,res,next) =>{
         }
     
         user = await User.create({
-            firstName,
-            lastName,
-            email,
-            phone,
-            password,
-            gender,
-            dob,
-            enrollmentNumber,
-            profilePicture: cloudinaryResponse.secure_url,
-            role: "Student"
+          firstName,
+          lastName,
+          email,
+          phone,
+          password,
+          gender,
+          dob,
+          enrollmentNumber,
+          profilePicture: cloudinaryResponse.secure_url,
+          role: "Student",
         });
         generateToken(user,"User Registered",200,res);  
     }
@@ -84,15 +84,15 @@ export const userRegister = catchAsyncErrors(async (req,res,next) =>{
     }
 
     user = await User.create({
-        firstName,
-        lastName,
-        email,
-        phone,
-        password,
-        gender,
-        dob,
-        enrollmentNumber,
-        role: "Student"
+      firstName,
+      lastName,
+      email,
+      phone,
+      password,
+      gender,
+      dob,
+      enrollmentNumber,
+      role: "Student",
     });
     generateToken(user,"User Registered",200,res);
 });
@@ -140,4 +140,17 @@ export const logoutAdmin = catchAsyncErrors(async (req, res, next)=>{
         success: true,
         message: "User Logged Out Successfully.",
       });
+});
+
+export const getUserDetails = catchAsyncErrors(async (req, res, next) => {
+    const userId = req.params.userId;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return next(new ErrorHandler("User not found", 404));
+    }
+    res.status(200).json({
+      success: true,
+      data: user,
+    });
 });
