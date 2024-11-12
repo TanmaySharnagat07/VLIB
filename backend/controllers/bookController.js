@@ -1,9 +1,8 @@
 import { catchAsyncErrors } from "../middlewares/CatchAsyncError.js";
-import ErrorHandler from "../middlewares/errorMiddleware.js";
+import ErrorHandler from "../middlewares/ErrorMiddleware.js";
 import { Book } from "../models/bookSchema.js";
 import { User } from "../models/userSchema.js";
 import cloudinary from "cloudinary";
-import { sendReturnReminder } from "../utils/emailService.js";
 
 // Add New Book
 export const addNewBook = catchAsyncErrors(async (req, res, next) => {

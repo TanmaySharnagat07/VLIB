@@ -4,6 +4,7 @@ class ErrorHandler extends Error {
     this.statusCode = statusCode;
   }
 }
+export default ErrorHandler;
 
 export const ErrorMiddleware = (err, req, res, next) => {
   err.message = err.message || "Internal Server Error";
@@ -36,5 +37,3 @@ export const ErrorMiddleware = (err, req, res, next) => {
     message: errorMessage,
   });
 };
-
-export default ErrorHandler;
