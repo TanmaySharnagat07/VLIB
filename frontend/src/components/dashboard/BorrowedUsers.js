@@ -14,7 +14,9 @@ const BorrowedUsers = () => {
   useEffect(() => {
     const fetchBorrowedUsers = async () => {
       try {
-        const response = await fetch(`http://localhost:4000/api/books/${bookId}`);
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/api/books/${bookId}`
+        );
         if (!response.ok) {
           throw new Error("Failed to fetch borrowed users");
         }
@@ -39,13 +41,16 @@ const BorrowedUsers = () => {
 
   const handleReturnBook = async (borrowId) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/books/${bookId}/return`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ borrowId }),
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/books/${bookId}/return`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ borrowId }),
+        }
+      );
       if (!response.ok) {
         throw new Error("Failed to return the book");
       }

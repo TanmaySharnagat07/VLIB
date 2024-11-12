@@ -48,7 +48,7 @@ const DashboardAdmin = () => {
               }
               try {
                 const response = await fetch(
-                  `http://localhost:4000/api/user/${borrow.userId}`
+                  `${process.env.REACT_APP_API_URL}/api/user/${borrow.userId}`
                 );
                 if (!response.ok) {
                   throw new Error("Failed to fetch user details");

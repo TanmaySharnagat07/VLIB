@@ -9,12 +9,15 @@ const BookState = (props) => {
 
   const fetchBooks = async () => {
     try {
-      const response = await fetch("http://localhost:4000/api/books/getBooks", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/books/getBooks`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       const json = await response.json();
       setBooks(json.books);
@@ -49,11 +52,14 @@ const BookState = (props) => {
     }
 
     try {
-      const response = await fetch("http://localhost:4000/api/books/addBook", {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/books/addBook`,
+        {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        }
+      );
 
       const json = await response.json();
       if (json.success) {
@@ -70,14 +76,17 @@ const BookState = (props) => {
 
 
   const borrowBook = async (borrowedBooks) => {
-    const response = await fetch("http://localhost:4000/api/books/borrowBook", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({ books: borrowedBooks }), // Wrap borrowedBooks in an object with the key "books"
-    });
+    const response = await fetch(
+      `${process.env.REACT_APP_API_URL}/api/books/borrowBook`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ books: borrowedBooks }), // Wrap borrowedBooks in an object with the key "books"
+      }
+    );
 
     const json = await response.json();
     console.log(json);
@@ -92,7 +101,7 @@ const BookState = (props) => {
   const deleteBook = async (isbn) => {
     try {
       const response = await fetch(
-        "http://localhost:4000/api/books/deleteBook",
+        `${process.env.REACT_APP_API_URL}/api/books/deleteBook`,
         {
           method: "DELETE",
           headers: {
