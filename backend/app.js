@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 import { dbConnection } from "./db/dbConnection.js";
 import books from "./routers/bookRoute.js";
 import userRoute from "./routers/userRoute.js";
-import { ErrorMiddleware } from "./middlewares/errorMiddleware.js";
+import  ErrorMiddleware  from "./middlewares/errorMiddleware.js";
 import fileUpload from "express-fileupload";
 
 const app = express();
